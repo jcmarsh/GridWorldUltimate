@@ -22,7 +22,6 @@ import simulator.Master;
 public class SocketHandler {
 
 	public final static String FINISHED_STRING = "type=finished";
-	GridWorld gWorld;
 	GridWorldPanel gwPanel;
 	Car car;
 	LineNumberReader reader;
@@ -34,12 +33,7 @@ public class SocketHandler {
 
 	public boolean init (simulator.Environment gWorld, simulator.PlannableObject car, String ipAddr, int port)
 	{
-		if (GridWorld.class.isInstance(gWorld)) {
-			this.gWorld = (GridWorld) gWorld;
-			gwPanel = this.gWorld.getGridWorldPanel();
-		} else {
-			simulator.Master.error("SocketHandler can not be used for non-GridWorld");
-		}
+		gwPanel = gWorld.getGridWorldPanel();
 
 		if (Car.class.isInstance(car)) {
 			this.car = (Car) car;
@@ -190,20 +184,25 @@ public class SocketHandler {
 
 	void writeTargets ()
 	{
-		if (GridWorld.isDiscrete) {
-			// Write the grid coordinates of the target cells.
+		System.out.println("Hello from SocketHandler!");
+		System.out.println("gwPanel: " + gwPanel);
+		System.out.println("gwPanel.getTargets: " + gwPanel.getTargets());
+		System.out.println("Empty? " + gwPanel.getTargets().isEmpty());
+		//if (!gwPanel.getTargets().isEmpty()) {
+			if (GridWorld.isDiscrete) {
+				// Write the grid coordinates of the target cells.
+				for (GridObject d: gwPanel.getTargets()) {
+					System.out.println(d.getGridLoc().x + " " + d.getGridLoc().y);
+					writer.println (d.getGridLoc().x + " " + d.getGridLoc().y);
+				}	
+				return;
+			}
+
+			// Otherwise, write the rectangle info for continuous case.
 			for (GridObject d: gwPanel.getTargets()) {
-				System.out.println(d.getGridLoc().x + " " + d.getGridLoc().y);
-				writer.println (d.getGridLoc().x + " " + d.getGridLoc().y);
+				writer.println (d.x + " " + d.y + " " + d.width + " " + d.height);
 			}	
-			return;
-		}
-
-		// Otherwise, write the rectangle info for continuous case.
-		for (GridObject d: gwPanel.getTargets()) {
-			writer.println (d.x + " " + d.y + " " + d.width + " " + d.height);
-		}	
-
+		//}
 	}
 
 

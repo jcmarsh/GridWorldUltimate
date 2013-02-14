@@ -12,15 +12,11 @@ package gridworld.environments;
  * @author James Marshall <jcmarsh (at) gwmail.gwu.edu>
  */
 
-import gridworld.CarModel;
-import gridworld.GridObject;
-import gridworld.Line;
-import gridworld.Obstacle;
-import gridworld.Target;
-import gridworld.UniformRandom;
+import gridworld.*;
 
 import java.awt.*;
 import java.awt.geom.*;
+import java.awt.image.BufferedImage;
 import java.text.*;
 import java.util.*;
 
@@ -49,13 +45,27 @@ public class GridWorldPanel extends JPanel {
 	private ArrayList<Line> gridLines;
 	private ArrayList<CarModel> cars;
 
-        String topMessage = "Hello!";
+    String topMessage = "Hello!";
+        
+    // To store the gradient
+    BufferedImage gradient = null;
 
 	public GridWorldPanel() {
 		obstacles = new ArrayList<Obstacle>();
 		targets = new ArrayList<Target>();
 		gridLines = new ArrayList<Line>();
 		cars = new ArrayList<CarModel>();
+	}
+	
+	public void initGradient() {
+		int w = D.width - 2 * INSET;
+		int h = D.height - 2 * INSET;
+		gradient = new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+		for (int i = 0; i < w; i++) {
+			for (int j = 0; j < h; j++) {
+				gradient.setRGB(i, j, i * j);
+			}
+		}
 	}
 	
 	// From continuous location to a discrete cell
@@ -163,6 +173,10 @@ public class GridWorldPanel extends JPanel {
 		g.setColor (Color.white);
 		g.fillRect (0,0, D.width,D.height);
 
+		if (gradient != null) {
+			g.drawImage(gradient, INSET, INSET, null);
+		}
+		
 		// Axes, bounding box.
 		drawBoundingBox(g);
 

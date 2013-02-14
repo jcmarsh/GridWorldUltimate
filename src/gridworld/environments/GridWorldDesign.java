@@ -165,4 +165,8 @@ public class GridWorldDesign implements simulator.Environment {
 		// Our work is never done!
 		return false;
 	}
+	@Override
+	public GridWorldPanel getGridWorldPanel() {
+		return gwPanel;
+	}
 }

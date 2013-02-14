@@ -14,14 +14,15 @@ import javax.swing.*;
 * sets controllers and resets/go/pause/quits.
 * 
 * Jun 19, 2012
-* @author James Marshall <jcmarsh@gwmail.gwu.edu>
+* @author James Marshall <jcmarsh (at) gwmail.gwu.edu>
 */
 
 public class MasterCP {
 	private String GWDisc = "GridWorldDiscrete";
 	private String GWCont = "GridWorldContinuous";
 	private String GWDesi = "GridWorldDesign";
-	private String[] environments = {GWDisc, GWCont, GWDesi};
+	private String GWGrad = "Gradient";
+	private String[] environments = {GWDisc, GWCont, GWDesi, GWGrad};
 	private JComboBox environmentBox;
 	private static JTextArea consoleText = null;
 	private JTextField pObjectsField;
@@ -71,6 +72,8 @@ public class MasterCP {
 			env = new gridworld.environments.GridWorld(false);
 		} else if (selected.equalsIgnoreCase(GWDesi)) {
 			env = new gridworld.environments.GridWorldDesign();
+		} else if (selected.equalsIgnoreCase(GWGrad)) {
+			env = new gridworld.environments.Gradient();
 		} else {
 			error("Failed to create environment");
 			return null;

@@ -8,6 +8,8 @@ package simulator;
  * @author James Marshall <jcmarsh@gwmail.gwu.edu>
  */
 
+import gridworld.environments.GridWorldPanel;
+
 import javax.swing.*;
 
 public interface Environment {
@@ -27,4 +29,5 @@ public interface Environment {
     // adjacency?
 
     public boolean isDone();
+	public GridWorldPanel getGridWorldPanel();
 }

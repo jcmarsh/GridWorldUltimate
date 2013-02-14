@@ -43,15 +43,15 @@ public class GridWorld  implements simulator.Environment {
 	// GUI stuff.
 	String[] blind = {"Known-targets", "Known-obstacles", "Both-unknown", "Both-known"};
 
-	String[] tasks = {"Task-1", "Task-2", "Task-3", "Task-4", "Task-5", "Task-6"};
+	private String[] tasks = {"Task-1", "Task-2", "Task-3", "Task-4", "Task-5", "Task-6"};
 	public static int taskNum = 1;
-	String[] scenes = {"Scene-1", "Scene-2", "Scene-3"};
+	private String[] scenes = {"Scene-1", "Scene-2", "Scene-3"};
 	public static int sceneNum = 1;
-	String[] noiseLevels = {"zero-noise", "low-noise","high-noise"};
+	private String[] noiseLevels = {"zero-noise", "low-noise","high-noise"};
 	public static int noiseLevel = 0;
-	String[] suddenTypes = {"no sudden obstacles", "fixed sudden", "moving sudden"};
+	private String[] suddenTypes = {"no sudden obstacles", "fixed sudden", "moving sudden"};
 	int suddenType = 0;
-	String[] driveTypes = {"velocity-model ", "accel-model"};
+	private String[] driveTypes = {"velocity-model ", "accel-model"};
 	public static boolean accModel = false;
 
 	Color gridColor = Color.lightGray;
@@ -305,7 +305,7 @@ public class GridWorld  implements simulator.Environment {
 
 	void setScene ()
 	{
-		gwPanel.initGridAndBorder ();
+		gwPanel.initGridAndBorder();
 
 		// Scene 1: no obstacles
 		if (sceneNum == 1) {
