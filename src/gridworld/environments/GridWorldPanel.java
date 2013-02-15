@@ -68,6 +68,12 @@ public class GridWorldPanel extends JPanel {
 		}
 	}
 	
+	public int readGradient(int x, int y) {
+		// TODO: Make sure in bounds first.
+		System.out.println("Requested point at: " + x + ", " + y);
+		return gradient.getRGB(x, y);
+	}
+	
 	// From continuous location to a discrete cell
 	public static Point identifyCell(Point2D.Double loc) {
 		return new Point((int) (loc.x / cellWidth), (int) (loc.y / cellHeight));

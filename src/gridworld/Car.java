@@ -53,6 +53,9 @@ public class Car implements simulator.PlannableObject {
 	StateSensor stateSensor;
 	simulator.Channel<String> toStateSensor;
 	simulator.Channel<ArrayList<String>> fromStateSensor;
+	GroundSensor groundSensor;
+	simulator.Channel<String> toGroundSensor;
+	simulator.Channel<ArrayList<String>> fromGroundSensor;
 	
 	private boolean isAccelModel;
 
@@ -76,6 +79,11 @@ public class Car implements simulator.PlannableObject {
 		fromStateSensor = new simulator.Channel<ArrayList<String>>(carNum);
 		stateSensor = new StateSensor(toStateSensor, fromStateSensor);
 		Sensors.add(stateSensor);
+		// Ground
+		toGroundSensor = new simulator.Channel<String>(carNum);
+		fromGroundSensor = new simulator.Channel<ArrayList<String>>(carNum);
+		groundSensor = new GroundSensor(gwPanel, toGroundSensor, fromGroundSensor);
+		Sensors.add(groundSensor);
 	}
 
 	public void init (Orientation orien) {
@@ -140,7 +148,7 @@ public class Car implements simulator.PlannableObject {
 		}
 	}
 
-    private String[] sensorCommands = {"gps", "range", "orientation", "velocity", "targetvisible", "targetclose"};
+    private String[] sensorCommands = {"ground", "gps", "range", "orientation", "velocity", "targetvisible", "targetclose"};
     private boolean checkValidSensorCommand(String action) {
 	for (String s : sensorCommands) {
 	    if (action.equalsIgnoreCase(s)) {
@@ -154,10 +162,17 @@ public class Car implements simulator.PlannableObject {
 		if (checkValidSensorCommand(actionStr)) {
 			if (actionStr.equalsIgnoreCase("gps")) {
 				toGPSSensor.setMessage(actionStr);
-			} else if (actionStr.equalsIgnoreCase("orientation") || actionStr.equalsIgnoreCase("velocity")) {
+			} else if (actionStr.equalsIgnoreCase("orientation") || 
+						actionStr.equalsIgnoreCase("velocity")) {
 				toStateSensor.setMessage(actionStr);
-			} else {
+			} else if (actionStr.equalsIgnoreCase("range") ||
+						actionStr.equalsIgnoreCase("targetclose") || 
+						actionStr.equalsIgnoreCase("targetvisible")){
 				toRangeSensor.setMessage(actionStr);
+			} else if (actionStr.equalsIgnoreCase("ground")) {
+				toGroundSensor.setMessage(actionStr);
+			} else {
+				simulator.Master.error("No valid command, but passed valid command check!!!");
 			}
 		} else {
 			simulator.Master.error("Invalid sensor command: " + actionStr);
@@ -165,7 +180,7 @@ public class Car implements simulator.PlannableObject {
 	}
 
 	public boolean hasMessage() {
-		return fromRangeSensor.hasMessage() || fromGPSSensor.hasMessage() || fromStateSensor.hasMessage();
+		return fromRangeSensor.hasMessage() || fromGPSSensor.hasMessage() || fromStateSensor.hasMessage() || fromGroundSensor.hasMessage();
 	}
 
 	public ArrayList<String> getMessage() {
@@ -173,6 +188,8 @@ public class Car implements simulator.PlannableObject {
 			return fromRangeSensor.getMessage();
 		} else if (fromGPSSensor.hasMessage()) {
 			return fromGPSSensor.getMessage();
+		} else if (fromGroundSensor.hasMessage()) {
+			return fromGroundSensor.getMessage();
 		} else {
 			return fromStateSensor.getMessage();
 		}
