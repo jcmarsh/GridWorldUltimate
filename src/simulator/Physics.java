@@ -3,6 +3,8 @@ package simulator;
 import gridworld.*;
 import java.util.ArrayList;
 
+import simulator.channel.Channel;
+
 /**
  * Physics.java
  * 

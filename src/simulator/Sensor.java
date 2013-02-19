@@ -1,6 +1,6 @@
 package simulator;
 
-import java.util.ArrayList;
+import simulator.channel.Channel;
 
 import gridworld.Util;
 
@@ -14,23 +14,23 @@ import gridworld.Util;
  * @author James Marshall <jcmarsh (at) gmail.gwu.edu>
  *
  */
-public abstract class Sensor implements simulator.PhysicsObject {
+public abstract class Sensor<T, F> implements simulator.PhysicsObject {
 	// Current location, orientation.
 	protected Orientation orientation;
 	
-	protected Channel<String> requestsToSensor;
-	protected Channel<ArrayList<String>> responsesFromSensor;
+	protected Channel<T> requestsToSensor;
+	protected Channel<F> responsesFromSensor;
 
-	public Sensor(Channel<String> requestsToSensor, Channel<ArrayList<String>> responsesFromSensor) {
+	public Sensor(Channel<T> requestsToSensor, Channel<F> responsesFromSensor) {
 		this.requestsToSensor = requestsToSensor;
 		this.responsesFromSensor = responsesFromSensor;
 	}
 	
-	public Channel<String> getToChannel() {
+	public Channel<T> getToChannel() {
 		return requestsToSensor;
 	}
 	
-	public Channel<ArrayList<String>> getFromChannel() {
+	public Channel<F> getFromChannel() {
 		return responsesFromSensor;
 	}
 	

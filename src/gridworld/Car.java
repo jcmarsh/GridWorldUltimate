@@ -5,9 +5,9 @@ import gridworld.sensors.*;
 
 import java.util.*;
 
-import simulator.Channel;
 import simulator.Orientation;
 import simulator.Sensor;
+import simulator.channel.Channel;
 
 /**
  * Car.java
@@ -39,23 +39,23 @@ public class Car implements simulator.PlannableObject {
 	GridObject target = null;       // The target.
 
 	// TODO: split discrete and continuous cars?
-	simulator.Channel<CarControl> controlToPhysics;
-	simulator.Channel<String> discActionStrToPhysics;
-	simulator.Channel<String> contActionStrToPhysics;
+	simulator.channel.Channel<CarControl> controlToPhysics;
+	simulator.channel.Channel<String> discActionStrToPhysics;
+	simulator.channel.Channel<String> contActionStrToPhysics;
 
 	ArrayList<Sensor> Sensors;
 	RangeSensor rangeSensor;
-	simulator.Channel<String> toRangeSensor;
-	simulator.Channel<ArrayList<String>> fromRangeSensor;
+	simulator.channel.Channel<String> toRangeSensor;
+	simulator.channel.Channel<ArrayList<String>> fromRangeSensor;
 	GPSSensor gpsSensor;
-	simulator.Channel<String> toGPSSensor;
-	simulator.Channel<ArrayList<String>> fromGPSSensor;
+	simulator.channel.Channel<String> toGPSSensor;
+	simulator.channel.Channel<ArrayList<String>> fromGPSSensor;
 	StateSensor stateSensor;
-	simulator.Channel<String> toStateSensor;
-	simulator.Channel<ArrayList<String>> fromStateSensor;
+	simulator.channel.Channel<String> toStateSensor;
+	simulator.channel.Channel<ArrayList<String>> fromStateSensor;
 	GroundSensor groundSensor;
-	simulator.Channel<String> toGroundSensor;
-	simulator.Channel<ArrayList<String>> fromGroundSensor;
+	simulator.channel.Channel<String> toGroundSensor;
+	simulator.channel.Channel<ArrayList<String>> fromGroundSensor;
 	
 	private boolean isAccelModel;
 
@@ -65,23 +65,23 @@ public class Car implements simulator.PlannableObject {
 		this.carNum = carNum;
 		Sensors = new ArrayList<Sensor>();
 		// Range
-		toRangeSensor = new simulator.Channel<String>(carNum);
-		fromRangeSensor = new simulator.Channel<ArrayList<String>>(carNum);
+		toRangeSensor = new simulator.channel.Channel<String>(carNum);
+		fromRangeSensor = new simulator.channel.Channel<ArrayList<String>>(carNum);
 		rangeSensor = new RangeSensor(gwPanel, toRangeSensor, fromRangeSensor);
 		Sensors.add(rangeSensor);
 		// GPS
-		toGPSSensor = new simulator.Channel<String>(carNum);
-		fromGPSSensor = new simulator.Channel<ArrayList<String>>(carNum);
+		toGPSSensor = new simulator.channel.Channel<String>(carNum);
+		fromGPSSensor = new simulator.channel.Channel<ArrayList<String>>(carNum);
 		gpsSensor = new GPSSensor(toGPSSensor, fromGPSSensor);
 		Sensors.add(gpsSensor);
 		// State
-		toStateSensor = new simulator.Channel<String>(carNum);
-		fromStateSensor = new simulator.Channel<ArrayList<String>>(carNum);
+		toStateSensor = new simulator.channel.Channel<String>(carNum);
+		fromStateSensor = new simulator.channel.Channel<ArrayList<String>>(carNum);
 		stateSensor = new StateSensor(toStateSensor, fromStateSensor);
 		Sensors.add(stateSensor);
 		// Ground
-		toGroundSensor = new simulator.Channel<String>(carNum);
-		fromGroundSensor = new simulator.Channel<ArrayList<String>>(carNum);
+		toGroundSensor = new simulator.channel.Channel<String>(carNum);
+		fromGroundSensor = new simulator.channel.Channel<ArrayList<String>>(carNum);
 		groundSensor = new GroundSensor(gwPanel, toGroundSensor, fromGroundSensor);
 		Sensors.add(groundSensor);
 	}
