@@ -1,26 +1,27 @@
 package gridworld.sensors;
 
-import java.util.ArrayList;
+import java.util.ArrayList;	
 
-import simulator.Channel;
+import simulator.channel.*;
 import simulator.Sensor;
 
-public class GPSSensor extends Sensor {
+public class GPSSensor extends Sensor<String, Double> {
 	
-	public GPSSensor (Channel<String> requestsToSensor, Channel<ArrayList<String>> responsesFromSensor)
+	public GPSSensor (Channel<String> requestsToSensor, Channel<String> responsesFromSensor,
+			ChannelM<Double> dataResponsesFromSensor)
 	{
-		super(requestsToSensor, responsesFromSensor);
+		super(requestsToSensor, responsesFromSensor, dataResponsesFromSensor);
 	}
 	@Override
 	public void nextStep(double delT) {
 		if (requestsToSensor.hasMessage()) {
-			ArrayList<String> message = new ArrayList<String> ();
+			ArrayList<Double> message = new ArrayList<Double> ();
 			
 			// ** Return current location. Later, add noise.
-			message.add ("x=" + orientation.location.x);
-			message.add ("y=" + orientation.location.y);
+			message.add(orientation.location.x);
+			message.add(orientation.location.y);
 			
-			responsesFromSensor.setMessage(message);
+			dataResponsesFromSensor.setMessage(message);
 		}
 	}
 

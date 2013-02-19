@@ -5,7 +5,7 @@ import gridworld.environments.GridWorldPanel;
 import java.awt.geom.Point2D;
 import java.util.ArrayList;
 
-import simulator.Channel;
+import simulator.channel.*;
 import simulator.Sensor;
 
 /**
@@ -20,14 +20,15 @@ import simulator.Sensor;
  *
  */
 
-public class GroundSensor extends Sensor {
+public class GroundSensor extends Sensor<String, Integer> {
 	GridWorldPanel gwPanel;
 	public static int NUM_SENSORS = 4;
 	private static double dist = 5;
 	Node[] nodes = new Node[NUM_SENSORS];
 	
-	public GroundSensor(GridWorldPanel gwPanel, Channel<String> requestsToSensor, Channel<ArrayList<String>> responsesFromSensor) {
-		super(requestsToSensor, responsesFromSensor);
+	public GroundSensor(GridWorldPanel gwPanel, Channel<String> requestsToSensor,
+			Channel<String> responsesFromSensor, ChannelM<Integer> dataResponsesFromSensor) {
+		super(requestsToSensor, responsesFromSensor, dataResponsesFromSensor);
 		this.gwPanel = gwPanel;
 		
 		for (int i = 0; i < NUM_SENSORS; i++) {
@@ -44,13 +45,14 @@ public class GroundSensor extends Sensor {
 		if (requestsToSensor.hasMessage()) {
 			String actionStr = requestsToSensor.getMessage();
 			if (actionStr.equalsIgnoreCase("ground")) {
-				ArrayList<String> message = new ArrayList<String> ();
+				ArrayList<Integer> message = new ArrayList<Integer> ();
 				for (int i = 0; i < NUM_SENSORS; i++) {
-					message.add(nodes[i].getReadString(i));
+					message.addAll(nodes[i].getIntegerValues(i));
 				}
 				
-				responsesFromSensor.setMessage(message);
+				dataResponsesFromSensor.setMessage(message);
 			} else {
+				responsesFromSensor.setMessage("GroundSensor error: " + actionStr);
 				simulator.Master.error("Bad GroundSensor command: " + actionStr);
 			}
 		}
@@ -65,7 +67,7 @@ public class GroundSensor extends Sensor {
 			this.parent = parent;
 		}
 		
-		public String getReadString(int index) {
+		public ArrayList<Integer> getIntegerValues(int index) {
 			Point2D.Double locInWorld = new Point2D.Double();
 			double theta = parent.orientation.theta;
 			locInWorld.x = offset.x * Math.cos(theta) - offset.y * Math.sin(theta);
@@ -75,18 +77,22 @@ public class GroundSensor extends Sensor {
 			
 			int result = parent.gwPanel.readGradient((int)locInWorld.x, (int)locInWorld.y);
 			
-			return "ground" + index + "=" + formatRGB(result);
+			return splitInt(result);
 		}
 		
-		private String formatRGB(int in) {
+		private ArrayList<Integer> splitInt(int in) {
+			ArrayList<Integer> retVal = new ArrayList<Integer>();
 			int R = in << 8;
 			R = R >>> 24;
+			retVal.add(R);
 			int G = in << 16;
 			G = G >>> 24;
+			retVal.add(G);
 			int B = in << 24;
 			B = B >>> 24;
+			retVal.add(B);
 			
-			return R + "," + G + "," + B;
+			return retVal;
 		}
 	}
 }

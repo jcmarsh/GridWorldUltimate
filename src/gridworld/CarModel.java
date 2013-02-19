@@ -54,9 +54,9 @@ public class CarModel extends GridObject implements simulator.PhysicsObject {
 
 	// Needs a reference to all sensors so that it can update their location as
 	// needed (ie. when the model's orientation is changed.
-	ArrayList<Sensor> Sensors;
+	ArrayList<Sensor<String, ?>> Sensors;
 
-	public CarModel(GridWorldPanel gwPanel, ArrayList<Sensor> Sensors, Orientation orientation, boolean isAccelModel) {
+	public CarModel(GridWorldPanel gwPanel, ArrayList<Sensor<String, ?>> Sensors, Orientation orientation, boolean isAccelModel) {
 		super(gwPanel);
 		this.Sensors = Sensors;
 		setOrientation(orientation);
@@ -102,7 +102,7 @@ public class CarModel extends GridObject implements simulator.PhysicsObject {
 		gridLoc = GridWorldPanel.identifyCell(orientation.location); 
 
 		// Update sensors
-		for (Sensor s : Sensors) {
+		for (Sensor<String, ?> s : Sensors) {
 			s.nextStep(delT);
 		}
 	}
@@ -479,7 +479,7 @@ public class CarModel extends GridObject implements simulator.PhysicsObject {
 	public void setOrientation(Orientation o) {
 		orientation = o;
 		
-		for (Sensor s : Sensors) {
+		for (Sensor<String, ?> s : Sensors) {
 			s.setOrientation(o);
 		}
 	}
@@ -492,7 +492,7 @@ public class CarModel extends GridObject implements simulator.PhysicsObject {
 		orientation.theta = angleFix(orientation.theta);
 		orientation.velocity += dvelocity;
 		
-		for (Sensor s : Sensors) {
+		for (Sensor<String, ?> s : Sensors) {
 			s.updateOrientation(dx, dy, dtheta, dvelocity);
 		}
 	}

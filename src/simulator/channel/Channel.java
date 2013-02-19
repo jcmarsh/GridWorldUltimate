@@ -20,15 +20,19 @@ public class Channel<T> {
 	protected T message;
 	protected int plannableObjectID = -1;
 	protected NoiseGen<T> generator = null;
-	protected String frmtStr = "";
+	protected String frmtStr = null;
 	protected boolean newMessage = false;
 
 	public void setNoiseGen(NoiseGen<T> noiseGen) {
 		generator = noiseGen;
 	}
 		
+	public Channel(int id) {
+		this.plannableObjectID = id;
+	}
+	
 	public Channel(int id, String frmtStr) {
-	    this.plannableObjectID = id;
+		this(id);
 	    this.frmtStr = frmtStr;
 	}
 
@@ -43,7 +47,11 @@ public class Channel<T> {
 	
 	public ArrayList<String> getMessageStr() {
 		ArrayList<String> msg = new ArrayList<String>();
-		msg.add(frmtStr + "=" + this.getMessage());
+		if (frmtStr != null) {
+			msg.add(frmtStr + "=" + this.getMessage());
+		} else {
+			msg.add(this.getMessage().toString());
+		}
 		return msg;
 	}
 

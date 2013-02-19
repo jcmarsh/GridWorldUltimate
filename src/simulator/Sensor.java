@@ -1,6 +1,6 @@
 package simulator;
 
-import simulator.channel.Channel;
+import simulator.channel.*;
 
 import gridworld.Util;
 
@@ -19,19 +19,29 @@ public abstract class Sensor<T, F> implements simulator.PhysicsObject {
 	protected Orientation orientation;
 	
 	protected Channel<T> requestsToSensor;
-	protected Channel<F> responsesFromSensor;
+	protected Channel<T> responsesFromSensor;
+	protected ChannelM<F> dataResponsesFromSensor = null;
 
-	public Sensor(Channel<T> requestsToSensor, Channel<F> responsesFromSensor) {
+	public Sensor(Channel<T> requestsToSensor, Channel<T> responsesFromSensor) {
 		this.requestsToSensor = requestsToSensor;
 		this.responsesFromSensor = responsesFromSensor;
+	}
+	
+	public Sensor(Channel<T> requestsToSensor, Channel<T> responsesFromSensor, ChannelM<F> dataResponsesFromSensor) {
+		this(requestsToSensor, responsesFromSensor);
+		this.dataResponsesFromSensor = dataResponsesFromSensor;
 	}
 	
 	public Channel<T> getToChannel() {
 		return requestsToSensor;
 	}
 	
-	public Channel<F> getFromChannel() {
+	public Channel<T> getFromChannel() {
 		return responsesFromSensor;
+	}
+	
+	public ChannelM<F> getDataFromChannel() {
+		return dataResponsesFromSensor;
 	}
 	
 	@Override

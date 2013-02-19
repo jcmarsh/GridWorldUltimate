@@ -2,7 +2,7 @@ package gridworld.sensors;
 
 import java.util.ArrayList;
 
-import simulator.Channel;
+import simulator.channel.*;
 import simulator.Sensor;
 import gridworld.CarModel;
 
@@ -17,12 +17,13 @@ import gridworld.CarModel;
  *
  */
 
-public class StateSensor extends Sensor {
+public class StateSensor extends Sensor<String, Double> {
 	CarModel carModel; // The car model which this sensor is attached to.
 
-	public StateSensor (Channel<String> requestsToSensor, Channel<ArrayList<String>> responsesFromSensor)
+	public StateSensor (Channel<String> requestsToSensor, Channel<String> responsesFromSensor,
+			ChannelM<Double> dataResponsesFromSensor)
 	{
-		super(requestsToSensor, responsesFromSensor);
+		super(requestsToSensor, responsesFromSensor, dataResponsesFromSensor);
 	}
 	
 	public void setCarModel(CarModel cm) {
@@ -32,20 +33,25 @@ public class StateSensor extends Sensor {
 	@Override
 	public void nextStep(double delT) {
 		if (requestsToSensor.hasMessage()) {
-			ArrayList<String> message = new ArrayList<String> ();
+			ArrayList<Double> message = new ArrayList<Double> ();
 			String actionStr = requestsToSensor.getMessage();
 
 			if (actionStr.equalsIgnoreCase("velocity")) {
 				// ** Return current velocity. Later, add noise.
-				message.add ("v1=" + carModel.getV1());
-				message.add ("v2=" + carModel.getV2());
+				message.add(carModel.getV1());
+				message.add(carModel.getV2());
 			} else if (actionStr.equalsIgnoreCase("orientation")) {
 				// ** Return current angle. Later, add noise.
-				message.add ("orientation=" + orientation.theta);
+				// TODO: This should not be here... like GPS, it is a result of previous actions, not an internal state.
+				message.add(orientation.theta);
 			} else {
-				message.add ("sensor=error");
+				responsesFromSensor.setMessage("StateSensor error: " + actionStr);
 			}
-			responsesFromSensor.setMessage(message);
+			if (message.isEmpty()) {
+				message = null;
+			} else {
+				dataResponsesFromSensor.setMessage(message);
+			}
 		}
 	}
 }

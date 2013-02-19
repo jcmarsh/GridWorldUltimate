@@ -43,19 +43,24 @@ public class Car implements simulator.PlannableObject {
 	simulator.channel.Channel<String> discActionStrToPhysics;
 	simulator.channel.Channel<String> contActionStrToPhysics;
 
-	ArrayList<Sensor> Sensors;
-	RangeSensor rangeSensor;
-	simulator.channel.Channel<String> toRangeSensor;
-	simulator.channel.Channel<ArrayList<String>> fromRangeSensor;
-	GPSSensor gpsSensor;
-	simulator.channel.Channel<String> toGPSSensor;
-	simulator.channel.Channel<ArrayList<String>> fromGPSSensor;
-	StateSensor stateSensor;
-	simulator.channel.Channel<String> toStateSensor;
-	simulator.channel.Channel<ArrayList<String>> fromStateSensor;
-	GroundSensor groundSensor;
-	simulator.channel.Channel<String> toGroundSensor;
-	simulator.channel.Channel<ArrayList<String>> fromGroundSensor;
+	// TODO: What do you think?
+	private ArrayList<Sensor<String, ?>> Sensors;
+	private RangeSensor rangeSensor;
+	private simulator.channel.Channel<String> toRangeSensor;
+	private simulator.channel.Channel<String> fromRangeSensor;
+	private simulator.channel.ChannelM<Double> dataFromRangeSensor;
+	private GPSSensor gpsSensor;
+	private simulator.channel.Channel<String> toGPSSensor;
+	private simulator.channel.Channel<String> fromGPSSensor;
+	private simulator.channel.ChannelM<Double> dataFromGPSSensor;
+	private StateSensor stateSensor;
+	private simulator.channel.Channel<String> toStateSensor;
+	private simulator.channel.Channel<String> fromStateSensor;
+	private simulator.channel.ChannelM<Double> dataFromStateSensor;
+	private GroundSensor groundSensor;
+	private simulator.channel.Channel<String> toGroundSensor;
+	private simulator.channel.Channel<String> fromGroundSensor;
+	private simulator.channel.ChannelM<Integer> dataFromGroundSensor;
 	
 	private boolean isAccelModel;
 
@@ -63,26 +68,30 @@ public class Car implements simulator.PlannableObject {
 		this.gwPanel = gwPanel;
 		this.isAccelModel = isAccelModel;
 		this.carNum = carNum;
-		Sensors = new ArrayList<Sensor>();
+		Sensors = new ArrayList<Sensor<String, ?>>();
 		// Range
 		toRangeSensor = new simulator.channel.Channel<String>(carNum);
-		fromRangeSensor = new simulator.channel.Channel<ArrayList<String>>(carNum);
-		rangeSensor = new RangeSensor(gwPanel, toRangeSensor, fromRangeSensor);
+		fromRangeSensor = new simulator.channel.Channel<String>(carNum);
+		dataFromRangeSensor = new simulator.channel.ChannelM<Double>(carNum, "range");
+		rangeSensor = new RangeSensor(gwPanel, toRangeSensor, fromRangeSensor, dataFromRangeSensor);
 		Sensors.add(rangeSensor);
 		// GPS
 		toGPSSensor = new simulator.channel.Channel<String>(carNum);
-		fromGPSSensor = new simulator.channel.Channel<ArrayList<String>>(carNum);
-		gpsSensor = new GPSSensor(toGPSSensor, fromGPSSensor);
+		fromGPSSensor = new simulator.channel.Channel<String>(carNum);
+		dataFromGPSSensor = new simulator.channel.ChannelM<Double>(carNum, "gps");
+		gpsSensor = new GPSSensor(toGPSSensor, fromGPSSensor, dataFromGPSSensor);
 		Sensors.add(gpsSensor);
 		// State
 		toStateSensor = new simulator.channel.Channel<String>(carNum);
-		fromStateSensor = new simulator.channel.Channel<ArrayList<String>>(carNum);
-		stateSensor = new StateSensor(toStateSensor, fromStateSensor);
+		fromStateSensor = new simulator.channel.Channel<String>(carNum);
+		dataFromStateSensor = new simulator.channel.ChannelM<Double>(carNum, "state");
+		stateSensor = new StateSensor(toStateSensor, fromStateSensor, dataFromStateSensor);
 		Sensors.add(stateSensor);
 		// Ground
 		toGroundSensor = new simulator.channel.Channel<String>(carNum);
-		fromGroundSensor = new simulator.channel.Channel<ArrayList<String>>(carNum);
-		groundSensor = new GroundSensor(gwPanel, toGroundSensor, fromGroundSensor);
+		fromGroundSensor = new simulator.channel.Channel<String>(carNum);
+		dataFromGroundSensor = new simulator.channel.ChannelM<Integer>(carNum, "ground");		
+		groundSensor = new GroundSensor(gwPanel, toGroundSensor, fromGroundSensor, dataFromGroundSensor);
 		Sensors.add(groundSensor);
 	}
 
@@ -94,7 +103,7 @@ public class Car implements simulator.PlannableObject {
 		return carNum;
 	}
 
-	String[] discreteActions = {"go", "left", "right", "pick", "drop"};
+	private String[] discreteActions = {"go", "left", "right", "pick", "drop"};
 	private boolean checkValidDiscrete(String action) {
 		for (String s : discreteActions) {
 			if (action.equalsIgnoreCase(s)) {
@@ -180,19 +189,34 @@ public class Car implements simulator.PlannableObject {
 	}
 
 	public boolean hasMessage() {
-		return fromRangeSensor.hasMessage() || fromGPSSensor.hasMessage() || fromStateSensor.hasMessage() || fromGroundSensor.hasMessage();
+		return fromRangeSensor.hasMessage() || dataFromRangeSensor.hasMessage()
+				|| fromGPSSensor.hasMessage() || dataFromGPSSensor.hasMessage()
+				|| fromStateSensor.hasMessage() || dataFromStateSensor.hasMessage()
+				|| fromGroundSensor.hasMessage() || dataFromGroundSensor.hasMessage();
 	}
 
 	public ArrayList<String> getMessage() {
+		ArrayList<String> msg = new ArrayList<String>();
 		if (fromRangeSensor.hasMessage()) {
-			return fromRangeSensor.getMessage();
+			msg.add(fromRangeSensor.getMessage());
+		} else if (dataFromRangeSensor.hasMessage()) {
+			msg = dataFromRangeSensor.getMessageStr();
 		} else if (fromGPSSensor.hasMessage()) {
-			return fromGPSSensor.getMessage();
+			msg.add(fromGPSSensor.getMessage());
+		} else if (dataFromGPSSensor.hasMessage()) {
+			msg =  dataFromGPSSensor.getMessageStr();
 		} else if (fromGroundSensor.hasMessage()) {
-			return fromGroundSensor.getMessage();
+			msg.add(fromGroundSensor.getMessage());
+		} else if (dataFromGroundSensor.hasMessage()) {
+			msg =  dataFromGroundSensor.getMessageStr();
+		} else if (fromStateSensor.hasMessage()) {
+			msg.add(fromStateSensor.getMessage());
+		} else if (dataFromStateSensor.hasMessage()) {
+			msg =  dataFromStateSensor.getMessageStr();
 		} else {
-			return fromStateSensor.getMessage();
+			msg.add("Car error: No message for the controller (but one was requested).");
 		}
+		return msg;
 	}
 
 	public double getDistanceMoved () {

@@ -4,18 +4,21 @@ package gridworld.sensors;
 import gridworld.CarModel;
 import gridworld.Cardinal;
 import gridworld.GridObject;
-import gridworld.Obstacle;
 import gridworld.Target;
 import gridworld.Util;
-import gridworld.environments.GridWorld;
 import gridworld.environments.GridWorldPanel;
 
-import java.util.*;
-import java.awt.*;
-import java.awt.geom.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics2D;
+import java.awt.Point;
+import java.awt.geom.Line2D;
+import java.awt.geom.Point2D;
+import java.util.ArrayList;
 
-import simulator.Channel;
 import simulator.Sensor;
+import simulator.channel.Channel;
+import simulator.channel.ChannelM;
 
 /**
  * RangeSensor.java
@@ -27,237 +30,64 @@ import simulator.Sensor;
  *
  */
 
-public class RangeSensor extends Sensor {
+public class RangeSensor extends Sensor<String, Double> {
 	// For distance calculations.
-	static double epsilon = 0.0001;
+	private static double epsilon = 0.0001;
 
-	GridWorldPanel gwPanel;
+	private GridWorldPanel gwPanel;
 
 	// Number of sensors.
-	int numSonar = 8;
+	private int numSonar = 8;
 
-	Point2D.Double[] sonarPoints;
-	double[] sonarDistances;
-
-	int gridx, gridy;
-	Cardinal discreteDirection;
-
-	private boolean discrete = false;
+	private Point2D.Double[] sonarPoints;
+	private double[] sonarDistances;
 	
-	public RangeSensor (GridWorldPanel gwPanel, Channel<String> requestsToSensor, Channel<ArrayList<String>> responsesFromSensor)
+	public RangeSensor (GridWorldPanel gwPanel, Channel<String> requestsToSensor,
+			Channel<String> responsesFromSensor, ChannelM<Double> dataResponsesFromSensor)
 	{
-		super(requestsToSensor, responsesFromSensor);
+		super(requestsToSensor, responsesFromSensor, dataResponsesFromSensor);
 		this.gwPanel= gwPanel;
 	}
 	
 	public void nextStep(double deltT) {
 		if (requestsToSensor.hasMessage()) {
-			// action is one of: range, targetclose, targetvisible.
-			ArrayList<String> message = new ArrayList<String> ();
 			String actionStr = requestsToSensor.getMessage();
-
-			if (discrete) {
-				if (actionStr.equals("targetclose")) {
-					// See if a target is in a neighboring cell.
-					boolean found = false;
-					for (Cardinal c : Cardinal.values()) {
-						Point location = GridWorldPanel.identifyCell(orientation.location);
-						Point next = CarModel.computeNextCell(c, location);
-						if (CarModel.validCell(next, gwPanel) &&
-								(Target.class.isInstance(gwPanel.grid[next.x][next.y]))) {
-							found = true;
-						}
-					}
-					if (found) {
-						message.add ("targetclose=true");
-					}
-					else {
-						message.add ("targetclose=false");
-					}
-				}
-				else if (actionStr.equals("range")) {
-					String distStr = discreteDistance();
-					message.add (distStr);
-				}
-				else if (actionStr.equals("targetvisible")) {
-					String targetStr = scanTarget();
-					message.add (targetStr);
-				}
-				else {
-					message.add ("sensor=error");
-				}
-			} else { // continuous
-				// action is one of: range, targetclose, targetvisible
-				if (actionStr.equals("targetclose")) {
-					// See if a target is in a neighboring cell.
-					Point location = GridWorldPanel.identifyCell(orientation.location);
-					boolean found = false;
-					for (Cardinal c : Cardinal.values()) {
-						Point next = CarModel.computeNextCell(c, location);						
-						if (CarModel.validCell(next, gwPanel) &&
-								(Target.class.isInstance(gwPanel.grid[next.x][next.y]))) {
-							found = true;
-						}
-					}
-					if (found) {
-						message.add ("targetclose=true");
-					}
-					else {
-						message.add ("targetclose=false");
-					}
-				}
-				else if (actionStr.equals("range")) {
-					String[] rangeReadings = continuousDistance ();
-					for (int i=0; i<rangeReadings.length; i++) {
-						message.add (rangeReadings[i]);
-					}
-				}
-				else if (actionStr.equals("targetvisible")) {
-					String targetStr = targetVisible ();
-					message.add (targetStr);
-				}
-				else {
-					message.add ("sensor=error");
-				}
+			// action is one of: range, targetclose, targetvisible
+			if (actionStr.equals("targetclose")) {
+				targetClose();
 			}
-			responsesFromSensor.setMessage(message);
+			else if (actionStr.equals("range")) {
+				continuousDistance ();
+			}
+			else if (actionStr.equals("targetvisible")) {
+				targetVisible();
+			}
+			else {
+				responsesFromSensor.setMessage("RangeSensor error: " + actionStr);
+			}
 		}
 	}
 	
-	/////////////////////////////////////////////////////////////////////////
-	// DISCRETE
-	public String discreteDistance ()
-	{
-		switch(discreteDirection) {
-		case NORTH:
-			return "range=" + scanYObstacle (1);
-		case SOUTH:
-			return "range=" + scanYObstacle (-1);
-		case EAST:
-			return "range=" + scanXObstacle (1);
-		case WEST:
-			return "range=" + scanXObstacle (-1);
-		default:
-			return "range=error";
+	private void targetClose() {
+		// See if a target is in a neighboring cell.
+		Point location = GridWorldPanel.identifyCell(orientation.location);
+		boolean found = false;
+		for (Cardinal c : Cardinal.values()) {
+			Point next = CarModel.computeNextCell(c, location);						
+			if (CarModel.validCell(next, gwPanel) &&
+					(Target.class.isInstance(gwPanel.grid[next.x][next.y]))) {
+				found = true;
+			}
+		}
+		if (found) {
+			responsesFromSensor.setMessage("targetclose=true");
+		}
+		else {
+			responsesFromSensor.setMessage("targetclose=false");
 		}
 	}
-
-	public String scanTarget ()
-	{
-		switch(discreteDirection) {
-		case NORTH:
-			return "targetvisible=" + scanYTarget (1);
-		case SOUTH:
-			return "targetvisible=" + scanYTarget (-1);
-		case EAST:
-			return "targetvisible=" + scanXTarget (1);
-		case WEST:
-			return "targetvisible=" + scanXTarget (-1);
-		default:
-			return "targetvisible=error";
-		}
-	}
-
-	int scanYObstacle (int increment)
-	{
-		int nexty = gridy + increment;
-		while (true) {
-			if ((nexty < 0) || (nexty >= GridWorldPanel.N)) {
-				return nexty;
-			}
-			else if (gwPanel.grid[gridx][nexty] == null) {
-				nexty += increment;
-			}
-			else if (Obstacle.class.isInstance(gwPanel.grid[gridx][nexty])) {
-				return nexty;
-			}
-			else if (CarModel.class.isInstance(gwPanel.grid[gridx][nexty])) {
-				return nexty;
-			}
-			else {
-				nexty += increment;
-			}
-		} // endwhile
-	}
-
-
-	int scanXObstacle (int increment)
-	{
-		int nextx = gridx + increment;
-		while (true) {
-			if ((nextx < 0) || (nextx >= GridWorldPanel.M)) {
-				return nextx;
-			}
-			else if (gwPanel.grid[nextx][gridy] == null) {
-				nextx += increment;
-			}
-			else if (Obstacle.class.isInstance(gwPanel.grid[nextx][gridy])) {
-				return nextx;
-			}
-			else if (CarModel.class.isInstance(gwPanel.grid[nextx][gridy])) {
-				return nextx;
-			}
-			else {
-				nextx += increment;
-			}
-		} // endwhile
-	}
-
-
-	boolean scanYTarget (int increment)
-	{
-		int nexty = gridy + increment;
-		while (true) {
-			if ((nexty < 0) || (nexty >= GridWorldPanel.N)) {
-				return false;
-			}
-			else if (gwPanel.grid[gridx][nexty] == null) {
-				nexty += increment;
-			}
-			else if (Obstacle.class.isInstance(gwPanel.grid[gridx][nexty])) {
-				return false;
-			}
-			else if (CarModel.class.isInstance(gwPanel.grid[gridx][nexty])) {
-				return false;
-			}
-			else if (Target.class.isInstance(gwPanel.grid[gridx][nexty])) {
-				return true;
-			}
-			else {
-				return false;
-			}
-		} // endwhile
-	}
-
-
-	boolean scanXTarget (int increment)
-	{
-		int nextx = gridx + increment;
-		while (true) {
-			if ((nextx < 0) || (nextx >= GridWorldPanel.M)) {
-				return false;
-			}
-			else if (gwPanel.grid[nextx][gridy] == null) {
-				nextx += increment;
-			}
-			else if (Obstacle.class.isInstance(gwPanel.grid[nextx][gridy])) {
-				return false;
-			}
-			else if (CarModel.class.isInstance(gwPanel.grid[nextx][gridy])) {
-				return false;
-			}
-			else if (Target.class.isInstance(gwPanel.grid[nextx][gridy])) {
-				return true;
-			}
-			else {
-				return false;
-			}
-		} // endwhile
-	}
-
-	/////////////////////////////////////////////////////////////////////////
-	// CONTINUOUS
-	public String targetVisible ()
+	
+	private void targetVisible()
 	{
 		// We need to update sensors to make sure a given
 		// target is not blocked by an obstacle.
@@ -291,46 +121,24 @@ public class RangeSensor extends Sensor {
 		// Now check if closest target point is not obscured.
 		if ((bestPoint != null) && (bestDist < sonarDistances[0])){
 			// OK, found a target.
-			return "targetvisible=true";
+			responsesFromSensor.setMessage("targetvisible=true");
 		}
 		else {
-			return "targetvisible=false";
+			responsesFromSensor.setMessage("targetvisible=false");
 		}
 	}
 
 
-	public String[] continuousDistance ()
+	private void continuousDistance ()
 	{
-		String[] sonarDistStr = new String [numSonar];
+		ArrayList<Double> msg = new ArrayList<Double> ();
 		updateSensors ();
 		for (int k=0; k<numSonar; k++) {
-			sonarDistStr[k] = "range" + k + "=" + addContinuousNoise(sonarDistances[k]);
+			msg.add(sonarDistances[k]);
 		}
-		return sonarDistStr;
-	}
-	
-	// TODO: improve the noise function
-	private Random rand = new Random(); // Note: no seed!
-	private double addContinuousNoise(double a) {
-		double retVal = 0.0;
-		double sum = 0.0;
-		double scale = 0;
-		if (GridWorld.noiseLevel == 1) {
-			scale = a / 15.0;
-		} else if (GridWorld.noiseLevel == 2) {
-			scale = a / 5.0;
-		}
-		// Approximate a normal distribution by adding 3 regular random numbers between -1 and 1
-		for (int i = 0; i < 3; i++) {
-			sum = sum + rand.nextFloat();
-		}
-		
-		retVal = scale * sum + a;
-		return retVal;
 	}
 
-
-	void updateSensors ()
+	private void updateSensors ()
 	{
 		// Each time, we create a new set of readings.
 		sonarPoints = new Point2D.Double [numSonar];
@@ -373,7 +181,7 @@ public class RangeSensor extends Sensor {
 
 	}
 
-	Point2D.Double intersect (double x, double y, double angle, Line2D.Double L)
+	private Point2D.Double intersect (double x, double y, double angle, Line2D.Double L)
 	{
 		// Key idea: if the given angle is between the angles of the lines 
 		// from (x,y) to the endpoints of L, then there will be an intersection.
@@ -436,7 +244,7 @@ public class RangeSensor extends Sensor {
 	}
 
 
-	boolean isBetween (double angle, double angleToPoint1, double angleToPoint2)
+	private boolean isBetween (double angle, double angleToPoint1, double angleToPoint2)
 	{
 		// This is not as straightforward as it might seem because of
 		// the different cases.
@@ -473,7 +281,7 @@ public class RangeSensor extends Sensor {
 
 
 
-	Point2D.Double lineSegIntersect (Line2D.Double La, Line2D.Double Lb)
+	private Point2D.Double lineSegIntersect (Line2D.Double La, Line2D.Double Lb)
 	{
 		// We will compute the intersection point in the usual way:
 		// write each in y=mx+c form, and solve for the intersection
@@ -516,7 +324,7 @@ public class RangeSensor extends Sensor {
 	}
 
 
-	Point2D.Double lineSegIntersectSlope (double m1, double c1, double m2, double c2)
+	private Point2D.Double lineSegIntersectSlope (double m1, double c1, double m2, double c2)
 	{
 		// We KNOW the intersection is proper, so no need for vertical checks.
 		if (Math.abs(m1-m2) < epsilon) {
@@ -531,7 +339,7 @@ public class RangeSensor extends Sensor {
 
 
 
-	Point2D.Double extLineIntersectVertical (double c1, double m2, double c2)
+	private Point2D.Double extLineIntersectVertical (double c1, double m2, double c2)
 	{
 		// The first line is vertical: x=c1. Second is normal: y=m2*x+c2
 		// Solve: y = m2*c1 + c2.
@@ -566,15 +374,8 @@ public class RangeSensor extends Sensor {
 	}
 
 
-	double dist (double x1, double y1, double x2, double y2)
+	private double dist (double x1, double y1, double x2, double y2)
 	{
 		return Math.sqrt ((x1-x2)*(x1-x2) + (y1-y2)*(y1-y2));
-	}
-
-
-	String printStr (Line2D.Double L)
-	{
-		String str = "[" + L.x1 + "," + L.y1 + ", " + L.x2 + "," + L.y2 + "]";
-		return str;
 	}
 }
