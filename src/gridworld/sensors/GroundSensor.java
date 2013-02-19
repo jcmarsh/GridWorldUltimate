@@ -75,7 +75,18 @@ public class GroundSensor extends Sensor {
 			
 			int result = parent.gwPanel.readGradient((int)locInWorld.x, (int)locInWorld.y);
 			
-			return "ground" + index + "=" + result;
+			return "ground" + index + "=" + formatRGB(result);
+		}
+		
+		private String formatRGB(int in) {
+			int R = in << 8;
+			R = R >>> 24;
+			int G = in << 16;
+			G = G >>> 24;
+			int B = in << 24;
+			B = B >>> 24;
+			
+			return R + "," + G + "," + B;
 		}
 	}
 }
