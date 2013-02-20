@@ -17,7 +17,7 @@ import simulator.NoiseGen;
  */
 
 public class Channel<T> {
-	protected T message;
+	private T message;
 	protected int plannableObjectID = -1;
 	protected NoiseGen<T> generator = null;
 	protected String frmtStr = null;

@@ -60,7 +60,7 @@ public class Car implements simulator.PlannableObject {
 	private GroundSensor groundSensor;
 	private simulator.channel.Channel<String> toGroundSensor;
 	private simulator.channel.Channel<String> fromGroundSensor;
-	private simulator.channel.ChannelM<Integer> dataFromGroundSensor;
+	private simulator.channel.ChannelM<RGB> dataFromGroundSensor;
 	
 	private boolean isAccelModel;
 
@@ -90,7 +90,7 @@ public class Car implements simulator.PlannableObject {
 		// Ground
 		toGroundSensor = new simulator.channel.Channel<String>(carNum);
 		fromGroundSensor = new simulator.channel.Channel<String>(carNum);
-		dataFromGroundSensor = new simulator.channel.ChannelM<Integer>(carNum, "ground");		
+		dataFromGroundSensor = new simulator.channel.ChannelM<RGB>(carNum, "ground");		
 		groundSensor = new GroundSensor(gwPanel, toGroundSensor, fromGroundSensor, dataFromGroundSensor);
 		Sensors.add(groundSensor);
 	}

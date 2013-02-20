@@ -20,14 +20,14 @@ import simulator.Sensor;
  *
  */
 
-public class GroundSensor extends Sensor<String, Integer> {
+public class GroundSensor extends Sensor<String, RGB> {
 	GridWorldPanel gwPanel;
 	public static int NUM_SENSORS = 4;
 	private static double dist = 5;
 	Node[] nodes = new Node[NUM_SENSORS];
 	
 	public GroundSensor(GridWorldPanel gwPanel, Channel<String> requestsToSensor,
-			Channel<String> responsesFromSensor, ChannelM<Integer> dataResponsesFromSensor) {
+			Channel<String> responsesFromSensor, ChannelM<RGB> dataResponsesFromSensor) {
 		super(requestsToSensor, responsesFromSensor, dataResponsesFromSensor);
 		this.gwPanel = gwPanel;
 		
@@ -45,9 +45,9 @@ public class GroundSensor extends Sensor<String, Integer> {
 		if (requestsToSensor.hasMessage()) {
 			String actionStr = requestsToSensor.getMessage();
 			if (actionStr.equalsIgnoreCase("ground")) {
-				ArrayList<Integer> message = new ArrayList<Integer> ();
+				ArrayList<RGB> message = new ArrayList<RGB> ();
 				for (int i = 0; i < NUM_SENSORS; i++) {
-					message.addAll(nodes[i].getIntegerValues(i));
+					message.add(nodes[i].getValue(i));
 				}
 				
 				dataResponsesFromSensor.setMessage(message);
@@ -67,7 +67,7 @@ public class GroundSensor extends Sensor<String, Integer> {
 			this.parent = parent;
 		}
 		
-		public ArrayList<Integer> getIntegerValues(int index) {
+		public RGB getValue(int index) {
 			Point2D.Double locInWorld = new Point2D.Double();
 			double theta = parent.orientation.theta;
 			locInWorld.x = offset.x * Math.cos(theta) - offset.y * Math.sin(theta);
@@ -77,22 +77,7 @@ public class GroundSensor extends Sensor<String, Integer> {
 			
 			int result = parent.gwPanel.readGradient((int)locInWorld.x, (int)locInWorld.y);
 			
-			return splitInt(result);
-		}
-		
-		private ArrayList<Integer> splitInt(int in) {
-			ArrayList<Integer> retVal = new ArrayList<Integer>();
-			int R = in << 8;
-			R = R >>> 24;
-			retVal.add(R);
-			int G = in << 16;
-			G = G >>> 24;
-			retVal.add(G);
-			int B = in << 24;
-			B = B >>> 24;
-			retVal.add(B);
-			
-			return retVal;
+			return new RGB(result);
 		}
 	}
 }

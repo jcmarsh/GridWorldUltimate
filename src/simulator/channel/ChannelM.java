@@ -32,6 +32,12 @@ public class ChannelM<T> extends Channel<ArrayList<T>> {
 	}
 
 	@Override
+	public ArrayList<T> getMessage() {
+		newMessage = false;
+		return message;
+	}
+	
+	@Override
 	public void setMessage(ArrayList<T> msg) {
 		message = new ArrayList<T>(); 
 		for (T m : msg) {
